@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: springboot-sample
+  labels:
+    app: springboot-sample
+spec:
+  selector:
+    matchLabels:
+      app: springboot-sample
+  replicas: 1
+  template:
+    metadata:
+      name: springboot-sample
+      labels:
+        app: springboot-sample
+    spec:
+      containers:
+        - name: springboot-sample
+          image: docker.io/hiondal/springboot-sample:latest
+          imagePullPolicy: Always
+          env:
+            - name: PORT
+              value: "8080"
+          ports:
+            - name: port1
+              containerPort: 8081
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1024Mi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: springboot-sample
+spec:
+  type: ClusterIP
+  selector:
+    app: springboot-sample
+  ports:
+    - name: springboot-sample
+      port: 8080
+      targetPort: 8080
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: springboot-sample
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: springboot-sample-u00.165.192.105.60.nip.io
+      http:
+        paths:
+          - path: /(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: springboot-sample
+                port: 
+                  number: 8080
+
